@@ -38,8 +38,8 @@ def produce_slice_hash(FileName, slice_content):
         return ""
     if len(function) != 1:
         print "The file <", FileName, "> has ", len(function), " funcitons."
-    absSlice = pu.removeComment(absSlice)
-    absSlice = pu.abstract_slice(slice_content, function[0].variableList)
+    absSlice = pu.removeComment(slice_content)
+    absSlice = pu.abstract_slice(absSlice, function[0].variableList)
     absSlice = pu.normalize(absSlice)
     hash_value = fnv1a_hash(absSlice)
     
@@ -143,11 +143,26 @@ def slice_from_project(lines_numbers):
 
 def get_slice_content(func_content, line_numbers):
     '''
+    func_content: List
+    line_number: List
     return the slice content corresponding to the line_number(that is 'node_id')
     return type: String
     '''
     content = ""
     line_numbers.sort()
+    
+    cut_nun = 0
+    for index, ll in enumerate(func_content):
+        temp = ll.strip()
+        if temp[0] == '{':
+            cut_nun = index + 1
+            break
+        elif temp[-1] == '{':
+            cut_nun = index + 2
+            break
+    line_numbers = [k for k in line_numbers if k >= cut_nun]
+    line_numbers.sort()
+    
     for num in line_numbers:
         try:
             content += func_content[num-1]   #two functions have same name is posible, need to be processed.

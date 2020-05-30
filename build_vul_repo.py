@@ -46,7 +46,7 @@ def generate_vul_repo():
                 #store hashvalue of function body.
                 dpd_dic = produce_slice.slice_from_project(dpd_content)
                 written[f] = {}
-                hash_and_value = produce_slice.procude_funcBody_hash(os.path.join(root, f))                
+                hash_and_value = produce_slice.produce_funcBody_hash(os.path.join(root, f))                
                 written[f]['hashvalue'] = []
                 written[f]['hashvalue'].append(hash_and_value[0])
                 written[f]['value'] = []
@@ -107,10 +107,10 @@ def get_func_by_web():
 
 if __name__ == '__main__':
     #selete how to get the vul functions.
-    get_func_by_git()
-    get_func_by_web()
-    import split_files_to_smaller
-    split_files_to_smaller.split_func_files(config.vul_badFunc_path)
+    #get_func_by_git()
+    #get_func_by_web()
+    #import split_files_to_smaller
+    #split_files_to_smaller.split_func_files(config.vul_badFunc_path)
     
     # use Joern generate CPG and then get dependence relationship
     

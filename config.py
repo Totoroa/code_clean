@@ -10,7 +10,7 @@ vul_badFunc_path = os.path.join(vul_func_path, 'Bad')
 vul_goodFunc_path = os.path.join(vul_func_path, 'Good')
 vul_badFuncDpd_path = os.path.join(vul_func_path, 'BadDpd')
 vul_patch_path = os.path.join(vul_func_path, 'Patch')
-vul_repo_file_path = r"E:\new-emm.json"
+vul_repo_file_path = r"E:\openssl.json"
 
 # VUL: get functions by git
 vul_git_path = r"F:\project\git_repo\openssl"  # where .git exist

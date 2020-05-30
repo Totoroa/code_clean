@@ -210,6 +210,7 @@ def detect_source_code():
             if not func_file.endswith('.c'):
                 continue
             # first, get the abstracted/normalized func_Body, to detect if the hashvalue of the func_Body is vulnerability.
+            print "-----------------------------------------------------------"
             print index, "/", total, os.path.join(root, func_file), "started."
             index += 1
             temp = produce_slice.produce_funcBody_hash(os.path.join(root, func_file))
@@ -225,6 +226,7 @@ def detect_source_code():
             # if the func_Body is "not" vulnerablity, then produce slices for current function. 
             # Build a bitvector for current function,         
             else:  #if 'break' executed, the else will no be executed.
+                slice_time1 = time.time()
                 dpd_content = ""
                 func_content = []
                 if not os.path.exists(os.path.join(config.src_funcDpd_path, func_file)):
@@ -245,7 +247,10 @@ def detect_source_code():
                     slice_hash = temp1[0]
                     bitvector[slice_hash] = 1
                     bitvector_dic[slice_hash] = line_dpd
+                slice_time2 = time.time()
+                print "produce slices time:", str(slice_time2 - slice_time1), "s."
                 
+                detect_time1 = time.time()
                 for vul_filename, records in vul_dic.items():
                     if bitvector[records['hashvalue'][0]] == 1:
                         print func_file, "   Bingo(3) !", vul_filename, "------------"
@@ -278,6 +283,8 @@ def detect_source_code():
                         report(outfile, os.path.join(root, func_file), line_list, vul_filename, records['lineNumber'], report_num)
                         report_num += 1
                         break
+                detect_time2 = time.time()
+                print "detect time: ", str(detect_time2 - detect_time1), "s."
     outfile.write("""
 </div>
 </body>

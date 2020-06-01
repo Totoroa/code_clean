@@ -26,36 +26,24 @@ def fnv1a_hash(string):
     hash = hash & (config.bloomfilter_size-1)
     return hash
 
-def produce_slice_hash(FileName, slice_content):
+def produce_slice_hash(variable_list, slice_content):
     '''
     slice_content: String. original slice.
     FileName: String
     return the hash value of abstracted and normalized function slice.
     '''
-    function = pu.parseFile_deep(FileName)
-    if len(function) == 0:
-        print "The file <", FileName, "> has ", len(function), " funcitons."
-        return ""
-    if len(function) != 1:
-        print "The file <", FileName, "> has ", len(function), " funcitons."
     absSlice = pu.removeComment(slice_content)
-    absSlice = pu.abstract_slice(absSlice, function[0].variableList)
+    absSlice = pu.abstract_slice(slice_content, variable_list)
     absSlice = pu.normalize(absSlice)
     hash_value = fnv1a_hash(absSlice)
     
     return [hash_value, absSlice]
 
-def produce_funcBody_hash(FileName):
+def produce_funcBody_hash(function):
     '''
     return the hash value of abstracted and normalized function Body.
     '''
-    function = pu.parseFile_deep(FileName)
-    if len(function) == 0:
-        print "The file <", FileName, "> has ", len(function), " funcitons."
-        return ""
-    if len(function) != 1:
-        print "The file <", FileName, "> has ", len(function), " funcitons."
-    absBody = pu.abstract(function[0], 4)[1]
+    absBody = pu.abstract(function, 4)[1]
     absBody = pu.normalize(absBody)
     hash_value = fnv1a_hash(absBody)
     

@@ -7,6 +7,8 @@ import os
 import sys
 import json
 import bitarray
+import time
+import multiprocessing
 
 import produce_slice
 import parseutility2 as pu
@@ -20,9 +22,11 @@ def get_func(source_file_path):
     function_list = pu.parseFile_shallow(source_file_path)
     print len(function_list)
     for functions in function_list:
-        func_filaName = source_file_path.split(os.path.basename(source_path),1)[1][1:]
+        func_filaName = source_file_path.split(os.path.basename(config.src_proj_path),1)[1][1:]
         func_filaName = func_filaName.replace('\\', '#~') + '$' + functions.name + '$' + str(functions.lines[0]) + '-' + str(functions.lines[1]) + '.c'
         try:
+            if not os.path.exists(config.src_func_path):
+                os.makedirs(config.src_func_path)
             with open(os.path.join(config.src_func_path, func_filaName), 'w') as ff:
                 func_content = file_content[functions.lines[0]-1 : functions.lines[1]]
                 ff.write("".join(func_content))
@@ -54,7 +58,7 @@ def get_func_in_project():
 
 if __name__ == '__main__':
     # get and store functions.
-    get_func_in_project()
+    #get_func_in_project()
     
     #get slice in source code and detect.
     detect_source_code.detect_source_code()

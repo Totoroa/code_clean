@@ -23,5 +23,5 @@ vulrepo_src_path = r"F:\data\self_vul_repo\patches_and_files"
 # SRC
 src_proj_path = r"F:\project\project_source\openssl-1.0.0a"
 src_func_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], 'functions')
-src_funcDpd_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], 'dpd')
+src_funcDpd_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], 'func_dpd')
 result_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], src_proj_path.split('\\')[-1]+".html")

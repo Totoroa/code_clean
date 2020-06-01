@@ -10,6 +10,7 @@ import parseutility2 as pu
 
 import os
 import datetime
+import json
 
 def generate_vul_repo():
     '''generate vul_repo according badFunc and badFuncDpd.'''
@@ -87,12 +88,15 @@ def generate_vul_repo():
                 print "completed. ", idx, "/", total
                 print "---------------------------------------------------------------------"
                 idx += 1
-    try:
-        with open(config.vul_repo_file_path,"w") as result_f:
-            json.dump(written, result_f, encoding='gbk')
-            print "Okay .."
-    except BaseException:
-        print "write file <", result_fileName, "> failed !"
+    with open(config.vul_repo_file_path,"w") as result_f:
+        json.dump(written, result_f, encoding='gbk')
+        print "Okay .."
+    #try:
+        #with open(config.vul_repo_file_path,"w") as result_f:
+            #json.dump(written, result_f, encoding='gbk')
+            #print "Okay .."
+    #except BaseException:
+        #print "write file <", config.vul_repo_file_path, "> failed !"
             
     end_time = datetime.datetime.now()
     print "Running time:", (end_time - start_time).seconds, "s"    

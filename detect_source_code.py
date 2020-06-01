@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import bitarray
+import time
 
 import produce_slice
 import config
@@ -20,7 +21,7 @@ def mark_content(source_ct, dpd_lines):
     dpd_lines: List
     """
     if dpd_lines == 0 or dpd_lines == "":
-        dpd_lines = range(1, len(dpd_lines)+1)
+        dpd_lines = range(1, len(source_ct)+1)
     dpd_lines = [i-1 for i in dpd_lines]
     for index in dpd_lines:
         temp = '<font color=\"#FFCC00\">'+source_ct[index].replace('<','&lt;').replace('>','&gt;')+'</font>'
@@ -131,7 +132,7 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     if len(patch_ct) > show_lines_limit:
         outfile.write("""
         #<div class="patch">
-            #<div class="filepath">%s</div>""" % vulfunc_file_name[9:])
+            #<div class="filepath">%s</div>""" % vul_file_name[9:])
         outfile.write("""
             #<div>
                 #<div class="codechunk">%s</div>
@@ -144,7 +145,7 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     else:
         outfile.write("""
         #<div class="patch">
-            #<div class="filepath">%s</div>""" % vulfunc_file_name[9:])
+            #<div class="filepath">%s</div>""" % vul_file_name[9:])
         outfile.write("""
             #<div>
                 #<div class="codechunk">%s</div>
@@ -160,7 +161,7 @@ def detect_source_code():
     bitvector_dic = {}    # record the slice's hashvalue and the line numbers. eg: {1839273: [1,5,7,9,10], 34502394: [6,7,8,10,11,12]}
     
     vul_dic = {}
-    with open(config.result_path, 'r') as f:
+    with open(config.vul_repo_file_path, 'r') as f:
         vul_dic = json.load(f, encoding='gbk')
     print "[+]import vul completed."
     
@@ -213,8 +214,20 @@ def detect_source_code():
             print "-----------------------------------------------------------"
             print index, "/", total, os.path.join(root, func_file), "started."
             index += 1
-            temp = produce_slice.produce_funcBody_hash(os.path.join(root, func_file))
+            start_time = time.time()
+            
+            #get variable list.
+            function = pu.parseFile_deep(os.path.join(root, func_file))
+            if len(function) == 0:
+                print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."
+                return ""
+            if len(function) != 1:
+                print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."   
+            variable_list = function[0].variableList            
+            
+            temp = produce_slice.produce_funcBody_hash(function[0])
             if temp == "":
+                print "!!"
                 continue
             hash_value = temp[0]
             for vulfunc_file_name, record in vul_dic.items():
@@ -241,13 +254,16 @@ def detect_source_code():
                 
                 # build a bitvector according to dpd_dic
                 bitvector.setall(0)
+                
+                
                 for line_num, line_dpd in dpd_dic.items():
                     slice_content = produce_slice.get_slice_content(func_content, line_dpd)
-                    temp1 = produce_slice.produce_slice_hash(os.path.join(root, func_file), slice_content)
+                    temp1 = produce_slice.produce_slice_hash(variable_list, slice_content)
                     slice_hash = temp1[0]
                     bitvector[slice_hash] = 1
                     bitvector_dic[slice_hash] = line_dpd
                 slice_time2 = time.time()
+                
                 print "produce slices time:", str(slice_time2 - slice_time1), "s."
                 
                 detect_time1 = time.time()
@@ -285,6 +301,8 @@ def detect_source_code():
                         break
                 detect_time2 = time.time()
                 print "detect time: ", str(detect_time2 - detect_time1), "s."
+                print "total time:", str(detect_time2 - start_time), "s."
+                
     outfile.write("""
 </div>
 </body>

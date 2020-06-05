@@ -58,7 +58,7 @@ def get_func_in_project():
 
 if __name__ == '__main__':
     # get and store functions.
-    #get_func_in_project()
+    get_func_in_project()
     
     #get slice in source code and detect.
-    detect_source_code.detect_source_code()
+    #detect_source_code.detect_source_code()

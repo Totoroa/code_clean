@@ -21,8 +21,8 @@ def get_dir_size(path):
 
 def split_func_files(func_path):
     '''split the files under func_path into folders'''
-    if get_dir_size(func_path) < max_size:
-        return
+    #if get_dir_size(func_path) < max_size:
+        #return
     move_path = func_path.split('\\')[-1]
     number = 0
     total_size = 0
@@ -45,3 +45,38 @@ def split_func_files(func_path):
                     os.mkdir(cur_path)
                 total_size = get_FileSize(file_path)
                 shutil.move(file_path, os.path.join(cur_path, f))        
+
+def split_same_and_diff_func(path, flag):
+    '''split files in path. under the path only have functions files, have no folders.
+    first split the files that have same function name.
+    then split the files that have different function name into smaller folder.
+    '''
+    same_name_func_path = ""
+    diff_name_func_path = ""
+    
+    if flag != 'vul' and flag != 'src':
+        print "Wrong flag !"
+        return
+    
+    file_list = os.listdir(path)
+    same_name_func_path = os.path.join(path, "same")
+    diff_name_func_path = os.path.join(path, "diff")    
+
+    if not os.path.exists(same_name_func_path):
+        os.makedirs(same_name_func_path)
+    if not os.path.exists(diff_name_func_path):
+        os.makedirs(diff_name_func_path)
+    same_list = []  #store function name
+    file_list = [os.path.join(path, k) for k in file_list]
+    for p in file_list:
+        func_name = ""
+        if flag == 'vul':
+            func_name = os.path.basename(p).split('$')[-1][:-2]
+        elif flag == 'src':
+            func_name = os.path.basename(p).split('$')[-2]
+        if func_name not in same_list:
+            same_list.append(func_name)
+            shutil.move(p, os.path.join(diff_name_func_path, os.path.basename(p)))
+        else:
+            shutil.move(p, os.path.join(same_name_func_path, os.path.basename(p)))
+    split_func_files(diff_name_func_path)

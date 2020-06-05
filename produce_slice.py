@@ -142,6 +142,8 @@ def get_slice_content(func_content, line_numbers):
     cut_nun = 0
     for index, ll in enumerate(func_content):
         temp = ll.strip()
+        if temp == '':
+            continue
         if temp[0] == '{':
             cut_nun = index + 1
             break

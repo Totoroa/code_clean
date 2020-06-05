@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 '''
 get functions by message crawled from web.
 '''
@@ -37,6 +38,26 @@ if not os.path.exists(bad_functions):
     os.mkdir(bad_functions)
 if not os.path.exists(good_functions):
     os.mkdir(good_functions)
+
+def get_diff_files():
+    bad = config.vul_badFunc_path
+    good = config.vul_goodFunc_path
+    patch = config.vul_patch_path
+    
+    bfiles = os.listdir(bad)
+    gfiles = os.listdir(good)
+    
+    idx = 0
+    for f in bfiles:
+        print "1"
+        if '(GoodFunc)'+f[9:] in gfiles:
+            print "2"
+            patch_fname = f[9:]
+            diffCommand = "\"{0}\" -u {1} {2} > {3}".format(config.diffBinary,os.path.join(bad, f),os.path.join(good, '(GoodFunc)'+f[9:]),os.path.join(patch, patch_fname))
+            os.system(diffCommand)
+            print f, "completed"
+            idx += 1
+    print "total files: ", idx
 
 def get_patch_range_from_patch_content(patch_content):
     '''
@@ -167,3 +188,6 @@ def main():
                     print(f, '  completed.  ', index, ' / ', total)
     endtime = datetime.datetime.now()
     print "Running time:", (endtime - starttime).seconds
+    print "[+]produce patch."
+    get_diff_files()
+    print "Over.."

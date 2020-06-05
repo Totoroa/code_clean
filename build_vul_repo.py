@@ -28,6 +28,12 @@ def generate_vul_repo():
         for f in files:
             if f.endswith('.c'):
                 print f, "  start."
+                if not os.path.exists(os.path.join(config.vul_badFuncDpd_path, f)):
+                    idx += 1
+                    continue
+                if os.path.getsize(os.path.join(root, f)) > 512000:
+                    idx += 1
+                    continue
                 badFunc_content = []   # get bad functions content.
                 with open(os.path.join(root, f), 'r') as ff:
                     badFunc_content = ff.readlines()
@@ -35,19 +41,23 @@ def generate_vul_repo():
                 for index, lines in enumerate(badFunc_content):
                     if lines.endswith('//-\n'):
                         del_line_number.append(index+1)
-                if not os.path.exists(os.path.join(config.vul_badFuncDpd_path, f)):
-                    idx += 1
-                    continue
-                
                 dpd_content = ""    # get bad functions dependence content.
                 with open(os.path.join(config.vul_badFuncDpd_path, f), 'r') as ff:
                     temp = ff.readlines()
                     dpd_content = "".join("".join(temp).split('\n'))
                 
+                function = pu.parseFile_deep(os.path.join(root, f))
+                if len(function) == 0:
+                    print "The file <", os.path.join(root, f), "> has ", len(function), " funcitons."
+                    continue
+                if len(function) != 1:
+                    print "The file <", os.path.join(root, f), "> has ", len(function), " funcitons."   
+                variable_list = function[0].variableList            
+                
                 #store hashvalue of function body.
                 dpd_dic = produce_slice.slice_from_project(dpd_content)
                 written[f] = {}
-                hash_and_value = produce_slice.produce_funcBody_hash(os.path.join(root, f))                
+                hash_and_value = produce_slice.produce_funcBody_hash(function[0])                
                 written[f]['hashvalue'] = []
                 written[f]['hashvalue'].append(hash_and_value[0])
                 written[f]['value'] = []
@@ -62,7 +72,7 @@ def generate_vul_repo():
                         print "node_id:", keys
                         print "dpd_id:", values
                         slice_content = produce_slice.get_slice_content(badFunc_content, values)
-                        slice_temp = produce_slice.produce_slice_hash(os.path.join(root, f), slice_content)
+                        slice_temp = produce_slice.produce_slice_hash(variable_list, slice_content)
                         written[f]['value'].append(slice_temp[1])
                         written[f]['hashvalue'].append(slice_temp[0])
                         written[f]['lineNumber'].append('-'.join(str(nb) for nb in values))
@@ -80,8 +90,8 @@ def generate_vul_repo():
                         fff.write(" ".join([str(nb) for nb in written[f]['lineId']]))
                         fff.write('\n')                        
                 except UnicodeDecodeError:
-                    print "write file <emm.txt> failed."
-                    with open(r'emm.txt', 'a') as fff:
+                    print "write file <vulRepo_backUp.txt> failed."
+                    with open(r'vulRepo_backUp.txt', 'a') as fff:
                         fff.write('\n')
                     written.pop(f)
                 
@@ -114,9 +124,10 @@ if __name__ == '__main__':
     #get_func_by_git()
     #get_func_by_web()
     #import split_files_to_smaller
-    #split_files_to_smaller.split_func_files(config.vul_badFunc_path)
+    #split_files_to_smaller.split_same_and_diff_func(config.vul_badFunc_path, 'vul')
     
     # use Joern generate CPG and then get dependence relationship
     
     # generate vul_repo.
     generate_vul_repo()
+    

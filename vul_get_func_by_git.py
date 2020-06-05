@@ -254,7 +254,9 @@ def get_diff_files():
     
     idx = 0
     for f in bfiles:
+        print "1"
         if '(GoodFunc)'+f[9:] in gfiles:
+            print "2"
             patch_fname = f[9:]
             diffCommand = "\"{0}\" -u {1} {2} > {3}".format(diffBinary,os.path.join(bad, f),os.path.join(good, '(GoodFunc)'+f[9:]),os.path.join(patch, patch_fname))
             os.system(diffCommand)
@@ -263,7 +265,7 @@ def get_diff_files():
     print "total files: ", idx
     
     
-if __name__ == "__main__":
+def main():
     commitsList = callGitLog(gitDir)
     process(commitsList, None)
     get_diff_files()

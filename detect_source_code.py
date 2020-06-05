@@ -8,23 +8,34 @@ import produce_slice
 import config
 import parseutility2 as pu
 
-def _html_escape(string):
+def _html_escape(oneList):
     '''
     Escape HTML
+    oneList: List
+    
+    return: List
     '''
-    html_escape_dict = { '&': '&amp;', '>': '&gt;', '<': '&lt;', '"': '&quot;', '\'': '&apos;' }    
-    return ''.join(html_escape_dict.get(c,c) for c in string)
+    html_escape_dict = { '&': '&amp;', '>': '&gt;', '<': '&lt;', '"': '&quot;', '\'': '&apos;' }
+    tp = []
+    for line in oneList:
+        tp.append("".join(html_escape_dict.get(c,c) for c in line))
+    return tp
 
 def mark_content(source_ct, dpd_lines):
     """
     source_ct: List
     dpd_lines: List
+    
+    return: List
     """
     if dpd_lines == 0 or dpd_lines == "":
         dpd_lines = range(1, len(source_ct)+1)
+    if dpd_lines[0] == 0:
+        tp = '-'.join(dpd_lines[1:]).split('-')
+        dpd_lines = list(set([int(k) for k in tp]))
     dpd_lines = [i-1 for i in dpd_lines]
     for index in dpd_lines:
-        temp = '<font color=\"#FFCC00\">'+source_ct[index].replace('<','&lt;').replace('>','&gt;')+'</font>'
+        temp = '<font color=\"#DAA520\">'+source_ct[index]+'</font>'
         source_ct[index] = temp
     return source_ct
     
@@ -34,9 +45,9 @@ def mark_patch_content(patch_ct):
     """
     for index in range(len(patch_ct)):
         if patch_ct[index].startswith('-'):
-            patch_ct[index] = '<font color=\"#AA0000\">'+patch_ct[index].replace('<','&lt;').replace('>','&gt;')+'</font>'
+            patch_ct[index] = '<font color=\"#AA0000\">'+patch_ct[index]+'</font>'
         if patch_ct[index].startswith('+'):
-            patch_ct[index] = '<font color=\"#00AA00\">'+patch_ct[index].replace('<','&lt;').replace('>','&gt;')+'</font>'
+            patch_ct[index] = '<font color=\"#00AA00\">'+patch_ct[index]+'</font>'
     return patch_ct
 
 def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, report_num):
@@ -52,8 +63,9 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     source_ct = []
     with open(src_file_name, 'r') as f:
         source_ct = f.readlines()
-    source_ct = mark_content(source_ct, src_dpd_lines)
+    #source_ct = mark_content(source_ct, src_dpd_lines)
     line_range = [int(num) for num in src_file_name.split("$")[2][:-2].split('-')]
+    temp_src_ct = mark_content(_html_escape(source_ct), src_dpd_lines)
         
     if len(source_ct) > show_lines_limit:
         outfile.write("""
@@ -64,22 +76,23 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
                 <div class="linenumber">""")
         for i in range(line_range[0], line_range[0]+ show_lines_limit):
             outfile.write("""
-                %d<br />""" % (i+1))
+                %d<br />""" % i)
         outfile.write("""
                 </div>
                 <div class="codechunk">%s</div>
-            </div>""" % _html_escape("".join(source_ct[:show_lines_limit])))
+            </div>""" % "".join(temp_src_ct[:show_lines_limit]))
+       
         outfile.write("""
             <a href="javascript:;" onclick="toggleNext(this);">+ show +</a><div style="display: none">
                 <div class="linenumber">""")
-        for i in range(line_range[0]+show_lines_limit, line_range[1]+1):
+        for i in range(line_range[0]+show_lines_limit, line_range[1]):
             outfile.write("""
                 %d<br />""" % (i+1))
         outfile.write("""
                 </div>
                 <div class="codechunk">%s</div>
             </div>
-        </div>""" %_html_escape("".join(source_ct[show_lines_limit:])))
+        </div>""" % "".join(temp_src_ct[show_lines_limit:]))
     else:
         outfile.write("""
         <div class="source">
@@ -94,63 +107,65 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
                 </div>
                 <div class="codechunk">%s</div>
             </div>
-        </div>""" % _html_escape("".join(source_ct)))
+        </div>""" % "".join(temp_src_ct))
         
     # vul_function info
     vul_ct = []
     with open(os.path.join(config.vul_badFunc_path, vul_file_name), 'r') as f:
         vul_ct = f.readlines()
-    vul_ct = mark_content(vul_ct, vul_dpd_lines)
+    #vul_ct = mark_content(vul_ct, vul_dpd_lines)
+    temp_vul_ct = mark_content(_html_escape(vul_ct), vul_dpd_lines)
     if len(vul_ct) > show_lines_limit:
         outfile.write("""
-        #<div class="patch">
-            #<div class="filepath">%s</div>""" % vul_file_name)
+        <div class="patch">
+            <div class="filepath">%s</div>""" % vul_file_name)
         outfile.write("""
-            #<div>
-                #<div class="codechunk">%s</div>
-            #</div>"""%_html_escape("".join(vul_ct[:show_lines_limit])))
+            <div>
+                <div class="codechunk">%s</div>
+            </div>"""% "".join(temp_vul_ct[:show_lines_limit]))
         outfile.write("""
-            #<a href="javascript:;" onclick="toggleNext(this);">+ show +</a><div style="display: none">
+            <a href="javascript:;" onclick="toggleNext(this);">+ show +</a><div style="display: none">
                 #<div class="codechunk">%s</div>
-            #</div>
-        #</div>"""%_html_escape("".join(vul_ct[show_lines_limit:])))
+            </div>
+        </div>"""% "".join(temp_vul_ct[show_lines_limit:]))
     else:
         outfile.write("""
-        #<div class="patch">
-            #<div class="filepath">%s</div>""" % vul_file_name)
+        <div class="patch">
+            <div class="filepath">%s</div>""" % vul_file_name)
         outfile.write("""
-            #<div>
-                #<div class="codechunk">%s</div>
-            #</div>
-        #</div>"""%_html_escape("".join(vul_ct)))
+            <div>
+                <div class="codechunk">%s</div>
+            </div>
+        </div>"""% "".join(temp_vul_ct))
     
     # patch(diff) info
     patch_ct = []
     with open(os.path.join(config.vul_patch_path, vul_file_name[9:]), 'r') as f:
         patch_ct = f.readlines()
-    patch_ct = mark_patch_content(patch_ct)
+    #patch_ct = mark_patch_content(patch_ct)
+    
     if len(patch_ct) > show_lines_limit:
         outfile.write("""
-        #<div class="patch">
-            #<div class="filepath">%s</div>""" % vul_file_name[9:])
+        <div class="patch">
+            <div class="filepath">%s</div>""" % vul_file_name[9:])
         outfile.write("""
-            #<div>
-                #<div class="codechunk">%s</div>
-            #</div>"""%_html_escape("".join(patch_ct[:show_lines_limit])))
+            <div>
+                <div class="codechunk">%s</div>
+            </div>""" % "".join(mark_patch_content(_html_escape(patch_ct[:show_lines_limit]))))
         outfile.write("""
-            #<a href="javascript:;" onclick="toggleNext(this);">+ show +</a><div style="display: none">
-                #<div class="codechunk">%s</div>
-            #</div>
-        #</div>"""%_html_escape("".join(patch_ct[show_lines_limit:])))
+            <a href="javascript:;" onclick="toggleNext(this);">+ show +</a><div style="display: none">
+                <div class="codechunk">%s</div>
+            </div>
+        </div>""" % "".join(mark_patch_content(_html_escape(patch_ct[show_lines_limit:]))))
     else:
         outfile.write("""
-        #<div class="patch">
-            #<div class="filepath">%s</div>""" % vul_file_name[9:])
+        <div class="patch">
+            <div class="filepath">%s</div>""" % vul_file_name[9:])
         outfile.write("""
-            #<div>
-                #<div class="codechunk">%s</div>
-            #</div>
-        #</div>"""%_html_escape("".join(patch_ct)))
+            <div>
+                <div class="codechunk">%s</div>
+            </div>
+        </div>""" % "".join(mark_patch_content(_html_escape(patch_ct))))
     
     outfile.write("""
     </div>""")
@@ -213,6 +228,11 @@ def detect_source_code():
             # first, get the abstracted/normalized func_Body, to detect if the hashvalue of the func_Body is vulnerability.
             print "-----------------------------------------------------------"
             print index, "/", total, os.path.join(root, func_file), "started."
+            
+            #if index < 5351:
+                #index += 1
+                #continue
+            
             index += 1
             start_time = time.time()
             
@@ -223,7 +243,7 @@ def detect_source_code():
                 return ""
             if len(function) != 1:
                 print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."   
-            variable_list = function[0].variableList            
+            variable_list = function[0].variableList
             
             temp = produce_slice.produce_funcBody_hash(function[0])
             if temp == "":

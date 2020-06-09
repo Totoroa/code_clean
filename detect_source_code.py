@@ -50,7 +50,7 @@ def mark_patch_content(patch_ct):
             patch_ct[index] = '<font color=\"#00AA00\">'+patch_ct[index]+'</font>'
     return patch_ct
 
-def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, report_num):
+def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, report_num, tag):
     show_lines_limit = 20
     
     with open("simple_record.txt", 'a') as ff:
@@ -70,7 +70,7 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     if len(source_ct) > show_lines_limit:
         outfile.write("""
         <div class="source">
-            <div class="filepath">%s</div>""" % (os.path.basename(src_file_name)+"  # "+str(report_num)))
+            <div class="filepath">%s</div>""" % (os.path.basename(src_file_name)+"  # "+str(report_num)+"  "+tag))
         outfile.write("""
             <div>
                 <div class="linenumber">""")
@@ -96,7 +96,7 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     else:
         outfile.write("""
         <div class="source">
-            <div class="filepath">%s</div>""" % (os.path.basename(src_file_name)+"  # "+str(report_num)))
+            <div class="filepath">%s</div>""" % (os.path.basename(src_file_name)+"  # "+str(report_num)+"  "+tag))
         outfile.write("""
             <div>
                 <div class="linenumber">""")
@@ -140,8 +140,11 @@ def report(outfile, src_file_name, src_dpd_lines, vul_file_name, vul_dpd_lines, 
     
     # patch(diff) info
     patch_ct = []
-    with open(os.path.join(config.vul_patch_path, vul_file_name[9:]), 'r') as f:
-        patch_ct = f.readlines()
+    try:
+        with open(os.path.join(config.vul_patch_path, vul_file_name[9:]), 'r') as f:
+            patch_ct = f.readlines()
+    except:
+        patch_ct = ["no patch now. "]
     #patch_ct = mark_patch_content(patch_ct)
     
     if len(patch_ct) > show_lines_limit:
@@ -225,13 +228,17 @@ def detect_source_code():
         for func_file in files:
             if not func_file.endswith('.c'):
                 continue
+            
             # first, get the abstracted/normalized func_Body, to detect if the hashvalue of the func_Body is vulnerability.
             print "-----------------------------------------------------------"
             print index, "/", total, os.path.join(root, func_file), "started."
             
-            #if index < 5351:
+            #if index < 2111:
                 #index += 1
                 #continue
+            if func_file != "ssl#~d1_lib.c$dtls1_free$132-181.c":
+                continue
+            
             
             index += 1
             start_time = time.time()
@@ -240,20 +247,29 @@ def detect_source_code():
             function = pu.parseFile_deep(os.path.join(root, func_file))
             if len(function) == 0:
                 print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."
-                return ""
+                continue
             if len(function) != 1:
                 print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."   
             variable_list = function[0].variableList
             
             temp = produce_slice.produce_funcBody_hash(function[0])
+            #=================================================
+            print "src:\n"
+            print temp[1]
+            print "vul:\n"
+            print "".join(vul_dic["(BadFunc)CVE-2014-8176$ssl#~d1_lib.c$dtls1_clear_queues.c"]["value"])
+            import sys
+            sys.exit()
+            #=================================================
+            
+            
             if temp == "":
-                print "!!"
                 continue
             hash_value = temp[0]
             for vulfunc_file_name, record in vul_dic.items():
                 if record['hashvalue'][0] == hash_value:
                     print func_file, "  Bingo(1) !", "match vul_function:", vulfunc_file_name
-                    report(outfile, os.path.join(root, func_file), 0, vulfunc_file_name, "", report_num)
+                    report(outfile, os.path.join(root, func_file), 0, vulfunc_file_name, "", report_num, "Bingo(1)")
                     report_num += 1
                     break
             # if the func_Body is "not" vulnerablity, then produce slices for current function. 
@@ -273,11 +289,11 @@ def detect_source_code():
                     func_content = ff.readlines()
                 
                 # build a bitvector according to dpd_dic
-                bitvector.setall(0)
-                
-                
+                bitvector.setall(0)                
                 for line_num, line_dpd in dpd_dic.items():
                     slice_content = produce_slice.get_slice_content(func_content, line_dpd)
+                    if slice_content == []:
+                        continue
                     temp1 = produce_slice.produce_slice_hash(variable_list, slice_content)
                     slice_hash = temp1[0]
                     bitvector[slice_hash] = 1
@@ -290,14 +306,12 @@ def detect_source_code():
                 for vul_filename, records in vul_dic.items():
                     if bitvector[records['hashvalue'][0]] == 1:
                         print func_file, "   Bingo(3) !", vul_filename, "------------"
-                        line_list = []
-                        for i in matched_hash:
-                            line_list.extend(bitvector_dic[i])
+                        line_list = bitvector_dic[records['hashvalue'][0]]
                         line_list = list(set(line_list))
                         line_list.sort()
-                        report(outfile, os.path.join(root, func_file), line_list, vul_filename, "", report_num)
+                        report(outfile, os.path.join(root, func_file), line_list, vul_filename, "", report_num, "Bingo(3)")
                         report_num += 1
-                        break                    
+                        break
                     if len(records['hashvalue']) == 1:
                         continue
                     flag = True
@@ -316,7 +330,7 @@ def detect_source_code():
                             line_list.extend(bitvector_dic[i])
                         line_list = list(set(line_list))
                         line_list.sort()
-                        report(outfile, os.path.join(root, func_file), line_list, vul_filename, records['lineNumber'], report_num)
+                        report(outfile, os.path.join(root, func_file), line_list, vul_filename, records['lineNumber'], report_num, "Bingo(2)")
                         report_num += 1
                         break
                 detect_time2 = time.time()

@@ -58,7 +58,12 @@ def get_func_in_project():
 
 if __name__ == '__main__':
     # get and store functions.
-    get_func_in_project()
+    #get_func_in_project()
+    #import split_files_to_smaller
+    #split_files_to_smaller.split_same_and_diff_func(config.src_func_path, 'src')
     
     #get slice in source code and detect.
-    #detect_source_code.detect_source_code()
+    t1 = time.time()
+    detect_source_code.detect_source_code()
+    t2 = time.time()
+    print "Time to detect: ",  str(detect_time2 - detect_time1), "s."

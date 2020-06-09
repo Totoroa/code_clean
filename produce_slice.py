@@ -151,6 +151,8 @@ def get_slice_content(func_content, line_numbers):
             cut_nun = index + 2
             break
     line_numbers = [k for k in line_numbers if k >= cut_nun]
+    if len(line_numbers) == 1:
+        return []
     line_numbers.sort()
     
     for num in line_numbers:

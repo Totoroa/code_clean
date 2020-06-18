@@ -67,7 +67,7 @@ def split_same_and_diff_func(path, flag):
     if not os.path.exists(diff_name_func_path):
         os.makedirs(diff_name_func_path)
     same_list = []  #store function name
-    file_list = [os.path.join(path, k) for k in file_list]
+    file_list = [os.path.join(path, k) for k in file_list if k.endswith('.c')]
     for p in file_list:
         func_name = ""
         if flag == 'vul':
@@ -76,7 +76,13 @@ def split_same_and_diff_func(path, flag):
             func_name = os.path.basename(p).split('$')[-2]
         if func_name not in same_list:
             same_list.append(func_name)
-            shutil.move(p, os.path.join(diff_name_func_path, os.path.basename(p)))
+            try:
+                shutil.move(p, os.path.join(diff_name_func_path, os.path.basename(p)))
+            except IOError:
+                pass
         else:
-            shutil.move(p, os.path.join(same_name_func_path, os.path.basename(p)))
-    split_func_files(diff_name_func_path)
+            try:
+                shutil.move(p, os.path.join(same_name_func_path, os.path.basename(p)))
+            except IOError:
+                pass
+    #split_func_files(diff_name_func_path)

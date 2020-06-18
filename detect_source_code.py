@@ -233,11 +233,11 @@ def detect_source_code():
             print "-----------------------------------------------------------"
             print index, "/", total, os.path.join(root, func_file), "started."
             
-            #if index < 2111:
+            #if index < 2642:
                 #index += 1
                 #continue
-            if func_file != "ssl#~d1_lib.c$dtls1_free$132-181.c":
-                continue
+            #if func_file != "ssl#~d1_lib.c$dtls1_free$132-181.c":
+                #continue
             
             
             index += 1
@@ -249,20 +249,17 @@ def detect_source_code():
                 print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."
                 continue
             if len(function) != 1:
-                print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."   
+                print "The file <", os.path.join(root, func_file), "> has ", len(function), " funcitons."
+            
+            # a threshold for function
+            if len(pu.normalize(function[0].funcBody)) < 50:
+                continue
             variable_list = function[0].variableList
+            parse_time = time.time()
+            print "parse function time:", str(parse_time - start_time), "s."
             
             temp = produce_slice.produce_funcBody_hash(function[0])
-            #=================================================
-            print "src:\n"
-            print temp[1]
-            print "vul:\n"
-            print "".join(vul_dic["(BadFunc)CVE-2014-8176$ssl#~d1_lib.c$dtls1_clear_queues.c"]["value"])
-            import sys
-            sys.exit()
-            #=================================================
-            
-            
+
             if temp == "":
                 continue
             hash_value = temp[0]
@@ -272,9 +269,13 @@ def detect_source_code():
                     report(outfile, os.path.join(root, func_file), 0, vulfunc_file_name, "", report_num, "Bingo(1)")
                     report_num += 1
                     break
+            
             # if the func_Body is "not" vulnerablity, then produce slices for current function. 
             # Build a bitvector for current function,         
             else:  #if 'break' executed, the else will no be executed.
+                type1_time = time.time()
+                print "detect type1 time:", str(type1_time - parse_time), "s."
+                
                 slice_time1 = time.time()
                 dpd_content = ""
                 func_content = []
@@ -289,15 +290,22 @@ def detect_source_code():
                     func_content = ff.readlines()
                 
                 # build a bitvector according to dpd_dic
-                bitvector.setall(0)                
+                bitvector.setall(0)
+                flag1 = True
                 for line_num, line_dpd in dpd_dic.items():
                     slice_content = produce_slice.get_slice_content(func_content, line_dpd)
                     if slice_content == []:
                         continue
+                    if slice_content == "":
+                        flag1 = False
+                        break
                     temp1 = produce_slice.produce_slice_hash(variable_list, slice_content)
                     slice_hash = temp1[0]
                     bitvector[slice_hash] = 1
                     bitvector_dic[slice_hash] = line_dpd
+                if not flag1:
+                    print "[Error]The dpd-files wrong."
+                    continue
                 slice_time2 = time.time()
                 
                 print "produce slices time:", str(slice_time2 - slice_time1), "s."

@@ -15,13 +15,13 @@ vul_repo_file_path = r"E:\total.json"
 # VUL: get functions by git
 vul_git_path = r"F:\project\git_repo\linux"  # where .git exist
 keyword = "CVE-20"
-RepoName = "Linux"
+RepoName = "qemu"
 
 # VUL: get functions by web
 vulrepo_src_path = r"F:\data\self_vul_repo\patches_and_files"
 
 # SRC
-src_proj_path = r"E:\lab\source-code\openssl-1.0.0a"  # original project path
+src_proj_path = r"E:\lab\source-code\qemu-2.8.1"  # original project path
 src_func_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], 'functions')  # where store the funcitons extracted from project
 src_funcDpd_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], 'func_dpd')
 result_path = os.path.join(os.getcwd(), src_proj_path.split('\\')[-1], src_proj_path.split('\\')[-1]+".html")
